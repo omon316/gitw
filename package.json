@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "��#\u0000 \u0000g\u0000i\u0000t\u0000w\u0000\r\u0000 \u0000\"# gitw\"",
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
@@ -15,5 +15,14 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "ws": "^8.19.0"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omon316/gitw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/omon316/gitw/issues"
+  },
+  "homepage": "https://github.com/omon316/gitw#readme"
 }
