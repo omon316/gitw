@@ -1,20 +1,26 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors'); // Prevents connection errors
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-
-// 1. Serve static files from a 'public' folder
-// (Move MunsterNet.html and its CSS/JS into a folder named 'public')
+// 1. Erlaubt Express, Dateien direkt aus dem Hauptverzeichnis UND 'public' zu laden
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname)); 
 
-// 2. Fallback: Always serve the main HTML file for the root URL
+// 2. Explizite Routen festlegen (Groß-/Kleinschreibung beachten!)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'MunsterNet.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Use Render's dynamically assigned port, or 3000 locally
+app.get('/MunsterNet.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'MunsterNet.html'));
+});
+
+app.get('/wire.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'wire.html'));
+});
+
+// 3. Port-Bindung für Render
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server läuft auf Port ${PORT}`);
+});
