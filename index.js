@@ -27,4 +27,11 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server läuft auf Port ${PORT}`);
+    // Behebt die 404 Fehler in der Konsole von wire.html
+app.get('/api/db', (req, res) => {
+    res.json([]); // Sendet ein leeres Array als Platzhalter
+});
+
+app.get('/api/analysts', (req, res) => {
+    res.json([]); // Behebt den Fehler beim Laden der Analysten
 });
