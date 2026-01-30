@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MunsterNet Social 3.4 (User Mode)</title>
+    <style>
+        :root {
+            /* DARK MODE PALETTE */
+            --primary: #2d88ff;
+            --bg: #18191a;
+            --card: #242526;
+            --text: #e4e6eb;
+            --text-sec: #b0b3b8;
+            --border: #3e4042;
+            --hover: #3a3b3c;
+            --input-bg: #3a3b3c;
+            --green: #42b72a;
+            --danger: #f02849;
+        }
+
+        body {
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- NAV --- */
+        nav {
+            background: var(--card); padding: 0 16px; height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            z-index: 500; position: fixed; top: 0; width: 100%; box-sizing: border-box;
+        }
+        .nav-left { display: flex; align-items: center; gap: 10px; width: 300px; }
+        .logo { font-size: 28px; font-weight: 800; color: var(--primary); cursor: pointer; letter-spacing: -0.5px; }
+        
+        .nav-center { flex: 1; display: flex; justify-content: center; }
+        .search-wrapper { position: relative; width: 100%; max-width: 600px; }
+        .search-bar { background: var(--input-bg); border-radius: 50px; padding: 0 16px 0 40px; border: none; width: 100%; outline: none; font-size: 15px; height: 40px; box-sizing: border-box; color: var(--text); }
+        .search-icon { position: absolute; left: 12px; top: 11px; color: var(--text-sec); }
+        .search-dropdown { position: absolute; top: 45px; left: 0; width: 100%; background: var(--card); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; max-height: 400px; overflow-y: auto; z-index: 1000; padding: 8px 0; border: 1px solid var(--border); }
+        .search-item { padding: 8px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .search-item:hover { background: var(--hover); }
+
+        .nav-right { width: 300px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .nav-user-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; background: #555; border: 1px solid var(--border); }
+
+        /* --- LAYOUT --- */
+        .container { display: flex; flex: 1; overflow: hidden; margin-top: 56px; }
+        .main-feed { flex: 1; overflow-y: auto; padding-bottom: 50px; display: flex; justify-content: center; }
+        .main-content-wrapper { width: 100%; max-width: 940px; }
+
+        /* --- PROFILE HEADER --- */
+        .profile-header { background: var(--card); margin-bottom: 0; position: relative; border-bottom: 1px solid var(--border); }
+        .cover-container { height: 350px; background-color: #333; position: relative; background-size: cover; background-position: center; border-radius: 0 0 8px 8px; max-width: 940px; margin: 0 auto; }
+        
+        .profile-width { padding: 0 20px; position: relative; max-width: 900px; margin: 0 auto; }
+        
+        .profile-pic-container { position: relative; margin-top: -30px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .profile-pic-wrapper { position: relative; margin-top: -100px; }
+        .profile-pic { width: 168px; height: 168px; border-radius: 50%; border: 4px solid var(--card); background: #333; object-fit: cover; }
+        
+        .profile-info { margin-left: 10px; margin-bottom: 15px; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 10px; }
+        .profile-name { font-size: 32px; font-weight: 800; margin: 0; line-height: 1.1; color: var(--text); display: flex; align-items: center; }
+        .profile-bio { font-size: 15px; color: var(--text-sec); margin-top: 5px; font-weight: 500; }
+        .company-badge { display: inline-block; background: var(--hover); color: var(--text-sec); font-size: 12px; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 8px; }
+
+        .action-bar { display: flex; gap: 8px; margin-bottom: 25px; align-items: center; }
+        .btn { padding: 0 16px; height: 36px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 15px; display: flex; align-items: center; gap: 6px; transition: 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-gray { background: var(--hover); color: var(--text); }
+        .btn-success { background: var(--green); color: black; } 
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* --- TABS --- */
+        .menu-bar { display: flex; gap: 5px; }
+        .menu-item { padding: 15px 16px; cursor: pointer; font-weight: 600; color: var(--text-sec); border-bottom: 3px solid transparent; border-radius: 5px 5px 0 0; }
+        .menu-item:hover { background: var(--hover); }
+        .menu-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* --- CONTENT GRIDS --- */
+        .content-area { display: flex; gap: 16px; padding: 20px 0; align-items: flex-start; }
+        .col-intro { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; position: sticky; top: 76px; }
+        .col-feed { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+        .card { background: var(--card); border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .card-title { font-size: 20px; font-weight: 700; margin: 0 0 16px 0; color: var(--text); }
+
+        /* --- INFO ROWS --- */
+        .fb-info-row { display: flex; gap: 12px; margin-bottom: 12px; font-size: 15px; align-items: center; }
+        .fb-info-icon { width: 24px; text-align: center; color: var(--text-sec); font-size: 20px; }
+        .fb-info-text { flex: 1; line-height: 1.4; color: var(--text-sec); }
+        .fb-highlight { color: var(--text); font-weight: 600; }
+
+        /* --- POSTS --- */
+        .post-header { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .post-meta { display: flex; flex-direction: column; }
+        .post-author { font-weight: 600; color: var(--text); cursor: pointer; }
+        .post-date { font-size: 13px; color: var(--text-sec); }
+        .post-text { font-size: 15px; line-height: 1.5; margin-bottom: 10px; white-space: pre-line; color: var(--text); }
+
+        /* --- PHOTOS & FRIENDS --- */
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-radius: 8px; overflow: hidden; }
+        .mini-photo { aspect-ratio: 1; object-fit: cover; width: 100%; cursor: pointer; background: #333; }
+        
+        .friend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .friend-item { cursor: pointer; }
+        .friend-pic { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; background: #333; border: 1px solid var(--border); }
+        .friend-name { font-size: 13px; font-weight: 600; margin-top: 4px; line-height: 1.2; color: var(--text); }
+
+        /* --- START SCREEN --- */
+        .start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .start-box { background: var(--card); padding: 40px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+        
+        /* --- EDIT INPUTS --- */
+        .edit-input { background: #111; border: 1px solid var(--primary); color: white; padding: 4px; border-radius: 4px; width: 100%; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+
+        /* --- CHAT UI --- */
+        .chat-sidebar {
+            position: fixed;
+            bottom: 0;
+            right: 80px;
+            width: 280px;
+            border-radius: 8px 8px 0 0;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            z-index: 1001;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .chat-header {
+            padding: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+        .chat-header:hover { background: var(--hover); }
+        .chat-contact-list {
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .contact-item:hover { background: var(--hover); }
+        .contact-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .contact-name { font-weight: 500; font-size: 14px; }
+
+        .chat-section-header {
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-sec);
+            background: var(--hover);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        .contact-item .last-msg {
+            font-size: 11px;
+            color: var(--text-sec);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .contact-item .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+        .contact-item .msg-time {
+            font-size: 10px;
+            color: var(--text-sec);
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .contact-item.has-chat {
+            border-left: 3px solid var(--primary);
+        }
+
+        .chat-windows-container {
+            position: fixed;
+            bottom: 0;
+            right: 370px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            z-index: 1000;
+            max-width: 600px;
+        }
+        .chat-window {
+            width: 300px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-window-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: var(--hover);
+            cursor: pointer;
+        }
+        .chat-window-body {
+            height: 300px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-window-input {
+            border: none;
+            border-top: 1px solid var(--border);
+            background: var(--input-bg);
+            padding: 12px;
+            color: var(--text);
+            outline: none;
+            font-size: 14px;
+        }
+        .msg-bubble {
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+        .msg-sent {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+        }
+        .msg-received {
+            background: var(--hover);
+            align-self: flex-start;
+        }
+        .msg-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+        .msg-wrapper.sent { align-self: flex-end; }
+        .msg-wrapper.received { align-self: flex-start; }
+        .msg-time {
+            font-size: 10px;
+            color: var(--text-sec);
+            margin-top: 2px;
+            padding: 0 5px;
+        }
+        .msg-wrapper.sent .msg-time { text-align: right; }
+        .msg-wrapper.received .msg-time { text-align: left; }
+        .chat-date-separator {
+            text-align: center;
+            margin: 15px 0;
+            position: relative;
+        }
+        .chat-date-separator span {
+            background: var(--card);
+            padding: 4px 12px;
+            font-size: 11px;
+            color: var(--text-sec);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .login-container {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 0;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .login-tabs {
+            display: flex;
+            background: var(--hover);
+        }
+        .login-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-sec);
+            transition: all 0.2s;
+        }
+        .login-tab:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .login-tab.active {
+            background: var(--card);
+            color: var(--accent);
+        }
+        .login-form-body {
+            padding: 30px;
+        }
+        .login-form {
+            display: none;
+        }
+        .login-form.active {
+            display: block;
+        }
+        .login-form h2 {
+            margin: 0 0 20px 0;
+            color: white;
+            font-size: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-sec);
+            font-size: 13px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .form-button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .form-message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-overlay" id="login-overlay" style="display: none;">
+    <div class="login-container">
+        <div class="login-tabs">
+            <div class="login-tab active" onclick="switchLoginTab('login')">Einloggen</div>
+            <div class="login-tab" onclick="switchLoginTab('register')">Registrieren</div>
+        </div>
+        <div class="login-form-body">
+            <!-- Login Form -->
+            <div class="login-form active" id="login-form">
+                <h2>Willkommen zurück</h2>
+                <div class="form-group">
+                    <label for="login-user">Nutzername</label>
+                    <input type="text" id="login-user" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="login-pass">Passwort</label>
+                    <input type="password" id="login-pass" class="form-input">
+                </div>
+                <button class="btn btn-primary form-button" onclick="handleLogin()">Einloggen</button>
+                <div class="form-message" id="login-message" style="color:var(--danger)"></div>
+            </div>
+            <!-- Registration Form -->
+            <div class="login-form" id="register-form">
+                <h2>Konto erstellen</h2>
+                <div class="form-group">
+                    <label for="reg-user">Nutzername</label>
+                    <input type="text" id="reg-user" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="reg-pass">Passwort</label>
+                    <input type="password" id="reg-pass" class="form-input">
+                </div>
+                <button class="btn btn-primary form-button" onclick="handleRegister()">Registrieren</button>
+                <div class="form-message" id="register-message" style="color:var(--success)"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="start-screen" id="start-screen">
+    <div class="start-box">
+        <h1 style="color:var(--primary); font-size: 40px; margin-bottom: 10px; letter-spacing: -1px;">MunsterNet</h1>
+        <p style="color:var(--text-sec); margin-bottom: 30px; font-size: 16px;">Verbinde mit Server...</p>
+    </div>
+</div>
+
+<nav>
+    <div class="nav-left">
+        <div class="logo" onclick="renderProfile(myId)">MunsterNet</div>
+    </div>
+    <div class="nav-center">
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-bar" placeholder="Suche..." onkeyup="handleSearch(this.value)">
+            <div class="search-dropdown" id="search-results"></div>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div style="width:20px"></div>
+        <div style="font-weight: 600; font-size: 14px;" id="nav-user-name">Gast</div>
+        <div style="margin-left:10px;">
+             <img id="nav-user-pic" src="" class="nav-user-img" title="Mein Profil" onclick="renderProfile(myId)">
+        </div>
+        <button class="btn btn-gray" id="logout-btn" style="display:none; margin-left: 15px;" onclick="handleLogout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="main-feed" id="main-feed-area">
+        <div class="main-content-wrapper" id="profile-content"></div>
+    </div>
+</div>
+
+<!-- CHAT UI -->
+<div class="chat-windows-container" id="chat-windows-area"></div>
+<div class="chat-sidebar">
+    <div class="chat-header" onclick="toggleContactList()">
+        <span>Chat</span>
+        <span id="chat-online-count" style="float:right; color:var(--text-sec);"></span>
+    </div>
+    <div class="chat-contact-list" id="chat-contact-list-area">
+        <!-- Contacts will be rendered here by JS -->
+    </div>
+</div>
+
+<script>
+    // --- AUTH LOGIC ---
+    function switchLoginTab(tabName) {
+        document.querySelectorAll('.login-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelector(`.login-tab[onclick="switchLoginTab('${tabName}')"]`).classList.add('active');
+        
+        document.querySelectorAll('.login-form').forEach(form => form.classList.remove('active'));
+        document.getElementById(`${tabName}-form`).classList.add('active');
+    }
+
+    async function handleRegister() {
+        const username = document.getElementById('reg-user').value;
+        const password = document.getElementById('reg-pass').value;
+        const msgEl = document.getElementById('register-message');
+
+        if (!username || !password) {
+            msgEl.style.color = 'var(--danger)';
+            msgEl.innerText = 'Bitte alle Felder ausfüllen.';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/munsternet/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                msgEl.style.color = 'var(--success)';
+                msgEl.innerText = 'Registrierung erfolgreich! Du kannst dich jetzt einloggen.';
+            } else {
+                msgEl.style.color = 'var(--danger)';
+                msgEl.innerText = `Fehler: ${result.message}`;
+            }
+        } catch (err) {
+            msgEl.style.color = 'var(--danger)';
+            msgEl.innerText = 'Serverfehler bei der Registrierung.';
+        }
+    }
+
+    async function handleLogin() {
+        const username = document.getElementById('login-user').value;
+        const password = document.getElementById('login-pass').value;
+        const msgEl = document.getElementById('login-message');
+
+        try {
+            const response = await fetch('/api/munsternet/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                localStorage.setItem('munsternetUser', JSON.stringify({ profileId: result.profileId, username: result.username }));
+                initializeApp();
+            } else {
+                msgEl.innerText = `Fehler: ${result.message}`;
+            }
+        } catch (err) {
+            msgEl.innerText = 'Serverfehler beim Login.';
+        }
+    }
+
+    async function handleLogout() {
+        const user = JSON.parse(localStorage.getItem('munsternetUser'));
+        if (user) {
+            // Wire-Log: Logout
+            try {
+                await fetch('/api/munsternet/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ profileId: user.profileId, username: user.username })
+                });
+            } catch (err) {
+                console.error('Logout logging failed:', err);
+            }
+        }
+        localStorage.removeItem('munsternetUser');
+        window.location.reload();
+    }
+
+    function checkLogin() {
+        const user = localStorage.getItem('munsternetUser');
+        if (user) {
+            initializeApp();
+        } else {
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('start-screen').style.display = 'none';
+        }
+    }
+
+    function initializeApp() {
+        const user = JSON.parse(localStorage.getItem('munsternetUser'));
+        if (!user) return; 
+        myId = user.profileId;
+        currentProfileId = myId;
+
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+        document.getElementById('logout-btn').style.display = 'flex';
+
+        loadDatabase();
+    }
+
+    window.onload = checkLogin;
+    // --- STATE ---
+    let profiles = [];
+    let myId = 0; 
+    let currentProfileId = 0;
+    let currentTab = 'posts';
+    let isEditing = false; 
+
+    // --- HELPER ---
+    function getImg(src) { 
+        return (src && src.length > 50) ? src : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%233a3b3c'><rect width='100' height='100'/><circle cx='50' cy='40' r='15' fill='%23555'/><path d='M20 90 Q50 60 80 90' stroke='%23555' stroke-width='30'/></svg>"; 
+    }
+    
+    function getCover(src) { 
+        return (src && src.length > 50) ? `url('${src}')` : `linear-gradient(135deg, #2c3e50, #000000)`; 
+    }
+
+    function timeAgo(dateStr) {
+        if(!dateStr) return '';
+        const date = new Date(dateStr);
+        if(isNaN(date.getTime())) return dateStr; 
+        const seconds = Math.floor((new Date() - date) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " Jahre";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " Monate";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " Tage";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " Std.";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " Min.";
+        return "Gerade eben";
+    }
+
+    // --- ACTIVITY LOGGING ---
+    function logActivity(action, details) {
+        try {
+            fetch('/api/activity/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profileId: myId, action, details })
+            });
+        } catch (e) {
+            console.error('Activity logging failed:', e);
+        }
+    }
+
+    // --- IO ---
+    async function loadDatabase() {
+        try {
+            const response = await fetch('/api/db');
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+            const db = await response.json();
+            
+            profiles = db.profiles;
+            chats = db.chats || {};
+
+            if(!profiles.find(p => p.id === myId)) {
+                alert("Fehler: Ihr Profil wurde in der Datenbank nicht gefunden. Bitte loggen Sie sich erneut ein.");
+                handleLogout();
+                return;
+            }
+            
+            document.getElementById('start-screen').style.display = 'none';
+            updateNavUser();
+            renderProfile(myId);
+            renderContactList();
+            initWebSocket(); // Connect only after initial data is loaded
+
+        } catch(err) { 
+            document.getElementById('start-screen').innerHTML = `<div class="start-box"><h3>Server nicht erreichbar.</h3><p>Bitte sicherstellen, dass der Server läuft und die Seite neu laden.</p></div>`;
+        }
+    }
+
+    function syncDB() {
+        if (ws && ws.readyState === 1) {
+            const db = { profiles, chats };
+            ws.send(JSON.stringify({ action: 'syncDB', payload: db }));
+        } else {
+            console.error('WebSocket is not connected. Cannot sync.');
+        }
+    }
+    
+    function updateNavUser() {
+        const me = profiles.find(p => p.id === myId);
+        if(me) {
+            document.getElementById('nav-user-pic').src = getImg(me.img);
+            document.getElementById('nav-user-name').innerText = me.name;
+        }
+    }
+    
+    // --- NOTIFICATION LOGIC ---
+    function checkFriendNotifications() {
+        if(!profiles[0] || !profiles[0].systemData || !profiles[0].systemData.requests) return;
+        let requests = profiles[0].systemData.requests;
+        requests.forEach(r => {
+            if(r.from === myId && r.status === 'approved_notify') {
+                let target = profiles.find(p => p.id === r.to);
+                let targetName = target ? target.name : "Unbekannt";
+                alert(`Sie sind nun mit ${targetName} befreundet!`);
+                r.status = 'complete';
+            }
+        });
+    }
+
+    // --- EDIT PROFILE LOGIC ---
+    function toggleEditMode() {
+        isEditing = !isEditing;
+        renderProfile(myId);
+    }
+
+    async function saveProfileChanges() {
+        const p = profiles.find(x => x.id === myId);
+        const user = JSON.parse(localStorage.getItem('munsternetUser'));
+        let changesList = [];
+
+        // --- NAMENSÄNDERUNG MIT LOGGING (Login-Username bleibt unverändert!) ---
+        let newName = document.getElementById('edit-name').value;
+        if(newName && newName !== p.name) {
+            let oldName = p.name;
+            p.name = newName;
+            changesList.push(`Name: "${oldName}" → "${newName}"`);
+            updateNavUser();
+        }
+
+        // Andere Inputs mit Change-Tracking
+        if(document.getElementById('edit-bio')) {
+            let newVal = document.getElementById('edit-bio').value;
+            if(newVal !== (p.bio || '')) {
+                changesList.push(`Bio geändert`);
+                p.bio = newVal;
+            }
+        }
+        if(document.getElementById('edit-job')) {
+            let newVal = document.getElementById('edit-job').value;
+            if(newVal !== (p.info.job || '')) {
+                changesList.push(`Beruf: "${p.info.job || ''}" → "${newVal}"`);
+                p.info.job = newVal;
+            }
+        }
+        if(document.getElementById('edit-comp')) {
+            let newVal = document.getElementById('edit-comp').value;
+            if(newVal !== (p.info.company || '')) {
+                changesList.push(`Firma: "${p.info.company || ''}" → "${newVal}"`);
+                p.info.company = newVal;
+            }
+        }
+        if(document.getElementById('edit-city')) {
+            let newVal = document.getElementById('edit-city').value;
+            if(newVal !== (p.info.city || '')) {
+                changesList.push(`Stadt: "${p.info.city || ''}" → "${newVal}"`);
+                p.info.city = newVal;
+            }
+        }
+        if(document.getElementById('edit-rel')) {
+            let newVal = document.getElementById('edit-rel').value;
+            if(newVal !== (p.info.rel || '')) {
+                changesList.push(`Beziehungsstatus: "${p.info.rel || ''}" → "${newVal}"`);
+                p.info.rel = newVal;
+            }
+        }
+        if(document.getElementById('edit-club')) {
+            let newVal = document.getElementById('edit-club').value;
+            if(newVal !== (p.info.club || '')) {
+                changesList.push(`Verein: "${p.info.club || ''}" → "${newVal}"`);
+                p.info.club = newVal;
+            }
+        }
+
+        isEditing = false;
+
+        // Wire-Log: Alle Profiländerungen an Server senden
+        if(changesList.length > 0) {
+            // Lokales Log in DB
+            if(!profiles[0].systemData) profiles[0].systemData = {};
+            if(!profiles[0].systemData.logs) profiles[0].systemData.logs = [];
+            profiles[0].systemData.logs.unshift({
+                time: new Date().toLocaleTimeString(),
+                type: 'EDIT',
+                msg: `${p.name} (ID:${p.id}) hat Profil geändert: ${changesList.join(', ')}`
+            });
+        }
+
+        let msg = changesList.length > 0 ? "Profil aktualisiert & protokolliert." : "Keine Änderungen vorgenommen.";
+        alert(msg);
+        syncDB();
+        renderProfile(myId);
+    }
+
+    // --- RENDER ENGINE ---
+    function renderProfile(id) {
+        currentProfileId = id;
+        if(currentProfileId !== myId) isEditing = false;
+
+        const p = profiles.find(x => x.id === id); if(!p) return;
+        const isMe = (id === myId);
+        const isFriend = p.friends.includes(myId);
+        const isCompany = (p.type === 'company');
+
+        // Activity Log: Profil-Besuch tracken (nur fremde Profile)
+        if (!isMe) {
+            logActivity('PROFIL_BESUCH', {
+                viewedProfileId: id,
+                viewedProfileName: p.name,
+                viewedProfileType: p.type
+            });
+        }
+        
+        let isPending = false;
+        if(profiles[0].systemData && profiles[0].systemData.requests) {
+            isPending = profiles[0].systemData.requests.some(r => r.from === myId && r.to === id && r.status === 'pending');
+        }
+        
+        let isContentVisible = true;
+        if(p.type !== 'company') {
+             isContentVisible = isMe || !p.settings.isPrivate || isFriend;
+        }
+
+        // --- HEADER ---
+        // Name Logic (nur Anzeigename - Login-Username bleibt unverändert)
+        let nameHtml = p.name;
+        if(isEditing) {
+            let loginHint = p.loginUsername ? `<div style="font-size:11px; color:#888; margin-top:5px;">Login-Name: ${p.loginUsername} (nicht änderbar)</div>` : '';
+            nameHtml = `<input id="edit-name" class="edit-input" style="font-size:32px; font-weight:800; width:auto;" value="${p.name}" placeholder="Anzeigename">${loginHint}`;
+        }
+
+        // Bio Logic
+        let bioHtml = p.bio || (p.info.job ? p.info.job : '');
+        if(isEditing) bioHtml = `<input id="edit-bio" class="edit-input" value="${p.bio || ''}" placeholder="Kurzbeschreibung...">`;
+
+        // Button Logic
+        let actionButtons = '';
+        if (isMe) {
+            if (isEditing) {
+                actionButtons = `<button class="btn btn-success" onclick="saveProfileChanges()">💾 Speichern</button>`;
+            } else {
+                actionButtons = `<button class="btn btn-gray" onclick="toggleEditMode()">✏️ Bearbeiten</button>`;
+            }
+        } else {
+            // Message button is now always available for non-self profiles
+            let msgBtn = `<button class="btn btn-primary message-btn" data-userid="${p.id}">👋 Nachricht</button>`;
+            
+            if (isFriend) {
+                actionButtons = `<button class="btn btn-gray">✅ Verbunden</button>${msgBtn}`;
+            } else if (isPending) {
+                actionButtons = `<button class="btn btn-gray" disabled>⏳ Anfrage läuft...</button>${msgBtn}`;
+            } else {
+                actionButtons = `<button class="btn btn-primary" onclick="addFriend(${p.id})">👤 ${isCompany?'Abonnieren':'Hinzufügen'}</button>${msgBtn}`;
+            }
+        }
+
+        let html = `
+            <div class="profile-header">
+                <div class="cover-container" style="background-image: ${getCover(p.cover)}"></div>
+                <div class="profile-width">
+                    <div class="profile-pic-container">
+                        <div class="profile-pic-wrapper"><img src="${getImg(p.img)}" class="profile-pic"></div>
+                        <div class="profile-info">
+                            <h1 class="profile-name">
+                                ${nameHtml}
+                                ${isCompany ? '<span class="company-badge">🏢 Unternehmen</span>' : ''}
+                            </h1>
+                            <div class="profile-bio">${bioHtml}</div>
+                            <div style="font-size:13px; color:#b0b3b8; margin-top:2px;">
+                                ${p.friends.length} ${isCompany ? 'Abonnenten' : 'Freunde'}
+                            </div>
+                        </div>
+                        <div class="action-bar">${actionButtons}</div>
+                    </div>
+                    <div class="menu-bar">
+                        <div class="menu-item ${currentTab==='posts'?'active':''}" onclick="switchTab('posts')">Beiträge</div>
+                        <div class="menu-item ${currentTab==='info'?'active':''}" onclick="switchTab('info')">Info</div>
+                        <div class="menu-item ${currentTab==='friends'?'active':''}" onclick="switchTab('friends')">${isCompany ? 'Abonnenten' : 'Freunde'}</div>
+                        <div class="menu-item ${currentTab==='photos'?'active':''}" onclick="switchTab('photos')">Fotos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="profile-width">
+        `;
+
+        if(!isContentVisible) {
+             html += `
+                <div class="content-area" style="justify-content:center;">
+                    <div class="card" style="width:100%; max-width:600px; text-align:center; padding:40px;">
+                        <span style="font-size:40px">🔒</span>
+                        <h3>Privates Profil</h3>
+                        <p style="color:var(--text-sec)">Du bist nicht mit ${p.name} befreundet.</p>
+                        ${isPending ? '<p style="color:var(--primary)">Freundschaftsanfrage versendet.</p>' : ''}
+                    </div>
+                </div></div>`;
+             document.getElementById('profile-content').innerHTML = html;
+             return;
+        }
+
+        // TABS
+        if(currentTab === 'posts') {
+            // EDITABLE INFO FIELDS
+            let jobInfo = isEditing ? `<input id="edit-job" class="edit-input" value="${p.info.job||''}" placeholder="Job">` : `Arbeitet als <span class="fb-highlight">${p.info.job}</span>`;
+            let compInfo = isEditing ? `<input id="edit-comp" class="edit-input" value="${p.info.company||''}" placeholder="Firma">` : `Arbeitet bei <span class="fb-highlight">${p.info.company}</span>`;
+            let cityInfo = isEditing ? `<input id="edit-city" class="edit-input" value="${p.info.city||''}" placeholder="Stadt">` : `Wohnort <span class="fb-highlight">${p.info.city}</span>`;
+            let relInfo = isEditing ? `<input id="edit-rel" class="edit-input" value="${p.info.rel||''}" placeholder="Beziehungsstatus">` : `Beziehungsstatus <span class="fb-highlight">${p.info.rel}</span>`;
+            let clubInfo = isEditing ? `<input id="edit-club" class="edit-input" value="${p.info.club||''}" placeholder="Verein">` : `Mitglied bei <span class="fb-highlight">${p.info.club}</span>`;
+
+            html += `<div class="content-area">
+                <div class="col-intro">
+                    <div class="card">
+                        <h3 class="card-title">Steckbrief</h3>
+                        ${(p.info.job || isEditing) ? renderFbInfo('💼', jobInfo) : ''}
+                        ${(p.info.company && p.info.company !== 'Keine' || isEditing) ? renderFbInfo('🏢', compInfo) : ''}
+                        ${(p.info.city || isEditing) ? renderFbInfo('🏠', cityInfo) : ''}
+                        ${(!isCompany && (p.info.rel || isEditing)) ? renderFbInfo('❤️', relInfo) : ''}
+                        ${(!isCompany && (p.info.club && p.info.club !== 'Kein Verein' || isEditing)) ? renderFbInfo('⚽', clubInfo) : ''}
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h3 class="card-title" style="margin:0">Fotos</h3>
+                            <a style="color:var(--primary);font-size:14px;cursor:pointer" onclick="switchTab('photos')">Alle Fotos</a>
+                        </div>
+                        <div class="photo-grid">
+                            ${(p.gallery||[]).slice(0,9).map(s=>`<img src="${s}" class="mini-photo">`).join('')}
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <h3 class="card-title" style="margin:0">${isCompany ? 'Abonnenten' : 'Freunde'}</h3>
+                            <a style="color:var(--primary);font-size:14px;cursor:pointer" onclick="switchTab('friends')">Alle ansehen</a>
+                        </div>
+                        <div class="friend-grid">
+                            ${p.friends.slice(0,9).map(fid=>{
+                                let f=profiles.find(x=>x.id===fid); 
+                                return f ? `<div class="friend-item" onclick="renderProfile(${fid})"><img src="${getImg(f.img)}" class="friend-pic"><div class="friend-name">${f.name}</div></div>` : '';
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-feed">
+                    ${(isMe || isCompany) ? `
+                    <div class="card">
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <img src="${getImg(profiles.find(x=>x.id===myId).img)}" style="width:40px;height:40px;border-radius:50%;">
+                            <input id="new-post" placeholder="Schreibe etwas an ${isMe ? 'dich' : p.name}..." style="width:100%;border:none;background:var(--input-bg);padding:12px 15px;border-radius:20px;font-size:15px;outline:none;color:white">
+                        </div>
+                        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;justify-content:flex-end;">
+                            <button class="btn btn-primary" onclick="createPost()">Posten</button>
+                        </div>
+                    </div>` : ''}
+                    
+                    ${p.posts.length===0 ? '<div class="card" style="text-align:center;color:var(--text-sec);padding:40px;">Keine Beiträge vorhanden.</div>' :
+                      p.posts.map((pt)=> renderSinglePost(p, pt)).join('')}
+                </div>
+            </div>`;
+        } 
+        else if (currentTab === 'info') {
+            html += `<div class="card" style="margin-top:20px; max-width:800px;">
+                <h3 class="card-title">Info</h3>
+                <div style="display:flex;flex-direction:column;gap:15px;">
+                    ${renderFbInfo('💼', `Job: ${p.info.job || '-'}`)}
+                    ${renderFbInfo('🏠', `Wohnort: ${p.info.city || '-'}`)}
+                    ${!isCompany ? renderFbInfo('🗣️', `Sprachen: ${p.info.languages || '-'}`) : ''}
+                    ${!isCompany ? renderFbInfo('📞', `Telefon: ${p.info.phone || 'Nicht öffentlich'}`) : ''}
+                </div>
+            </div>`;
+        } 
+        else if (currentTab === 'friends') {
+            html += `<div class="card" style="margin-top:20px;">
+                <h3 class="card-title">${isCompany ? 'Abonnenten' : 'Freunde'}</h3>
+                <div class="friend-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+                    ${p.friends.map(fid=>{
+                        let f=profiles.find(x=>x.id===fid); 
+                        return f ? `<div class="friend-item" onclick="renderProfile(${fid})">
+                                        <img src="${getImg(f.img)}" class="friend-pic">
+                                        <div class="friend-name">${f.name}<br><span style="font-size:11px;color:var(--text-sec);font-weight:normal">${f.info.city}</span></div>
+                                    </div>` : '';
+                    }).join('')}
+                </div>
+            </div>`;
+        }
+
+        document.getElementById('profile-content').innerHTML = html + `</div>`;
+    }
+
+    function renderSinglePost(profileOwner, post) {
+        let authorId = post.authorId; 
+        let author = (authorId !== null && authorId !== undefined) ? profiles.find(x => x.id === authorId) : profileOwner;
+        if (!author) author = profileOwner;
+
+        let headerText = `<span class="post-author" onclick="renderProfile(${author.id})">${author.name}</span>`;
+        if (author.id !== profileOwner.id) {
+            headerText += ` <span style="color:var(--text-sec)">▶</span> <span class="post-author" onclick="renderProfile(${profileOwner.id})">${profileOwner.name}</span>`;
+        }
+        
+        let timeDisplay = timeAgo(post.date);
+
+        return `
+            <div class="card">
+                <div class="post-header">
+                    <img src="${getImg(author.img)}" style="width:40px;height:40px;border-radius:50%;cursor:pointer" onclick="renderProfile(${author.id})">
+                    <div class="post-meta">
+                        <div>${headerText}</div>
+                        <span class="post-date" title="${post.date}">${timeDisplay} · 🌍</span>
+                    </div>
+                </div>
+                <div class="post-text">${post.text}</div>
+                <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:5px;display:flex;gap:5px;">
+                    <button class="btn btn-gray" style="flex:1;justify-content:center;background:transparent;" onclick="alert('Funktion im Demo-Modus simuliert.')">👍 Gefällt mir</button>
+                    <button class="btn btn-gray" style="flex:1;justify-content:center;background:transparent;" onclick="prompt('Kommentar schreiben:')">💬 Kommentieren</button>
+                </div>
+            </div>`;
+    }
+
+    function renderFbInfo(icon, text) {
+        return `<div class="fb-info-row"><div class="fb-info-icon">${icon}</div><div class="fb-info-text">${text}</div></div>`;
+    }
+
+    function switchTab(t) { currentTab=t; renderProfile(currentProfileId); }
+    
+    function handleSearch(v) {
+        let d=document.getElementById('search-results');
+        if(!v) { d.style.display='none'; return; }
+        let h=profiles.filter(p=>p.id!==0 && p.name.toLowerCase().includes(v.toLowerCase())).slice(0,8);
+        d.innerHTML=h.map(p=>`
+            <div class="search-item" onclick="renderProfile(${p.id});document.getElementById('search-results').style.display='none';">
+                <img src="${getImg(p.img)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                <div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text-sec)">${p.info.city}</div></div>
+            </div>`).join('');
+        d.style.display='flex';
+    }
+    
+    function addFriend(fid) {
+        const me = profiles.find(p=>p.id===myId);
+        if(me.friends.includes(fid)) return;
+        
+        if(!profiles[0].systemData) profiles[0].systemData = {};
+        if(!profiles[0].systemData.requests) profiles[0].systemData.requests = [];
+        
+        let existing = profiles[0].systemData.requests.find(r => r.from === myId && r.to === fid && r.status === 'pending');
+        if(existing) {
+            alert("Anfrage läuft bereits. Bitte warten Sie auf Bestätigung durch den Admin.");
+            return;
+        }
+
+        profiles[0].systemData.requests.push({
+            type: 'friend_request',
+            from: myId,
+            to: fid,
+            status: 'pending',
+            timestamp: new Date().getTime()
+        });
+
+        alert("Freundschaftsanfrage versendet!");
+        renderProfile(fid);
+        syncDB();
+    }
+    
+    function createPost() {
+        let t=document.getElementById('new-post').value;
+        if(t) { 
+            let targetProfile = profiles.find(p => p.id === currentProfileId);
+            let authorId = (currentProfileId === myId) ? null : myId;
+            targetProfile.posts.unshift({ text: t, date: new Date().toLocaleString(), authorId: authorId }); 
+            renderProfile(currentProfileId); 
+        }
+    }
+    
+    
+    // --- CHAT LOGIC ---
+    let ws = null;
+    let chats = {};
+    let openChats = []; 
+
+    function initWebSocket() {
+        if (ws) ws.close();
+        ws = new WebSocket('ws://localhost:3004');
+
+        ws.onopen = () => {
+            console.log('WS Connected');
+            ws.send(JSON.stringify({ action: 'identify', payload: { profileId: myId } }));
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.action === 'dbPush') {
+                    // Update local state without full re-render
+                    let data = msg.payload;
+                    // We only care about chats updates mostly, profiles might change too
+                    profiles = data.profiles;
+                    chats = data.chats || {};
+                    updateOpenChatWindows();
+                    renderContactList();
+                }
+                else if (msg.action === 'newMessage') {
+                    const { convoId, message } = msg.payload;
+                    if (!chats[convoId]) chats[convoId] = [];
+                    chats[convoId].push(message);
+
+                    // If I am the recipient
+                    if (message.toId === myId) {
+                        if (openChats.includes(message.fromId)) {
+                            updateOpenChatWindows();
+                        } else {
+                            // Auto-open or notification? Let's auto-open for now
+                            let sender = profiles.find(p => p.id === message.fromId);
+                            if (sender) openChatWindow(sender.id, sender.name, getImg(sender.img));
+                        }
+                        renderContactList(); // Aktualisiere Chat-Liste bei neuer Nachricht
+                    } else if (message.fromId === myId) {
+                        // My own message (echoed back), update if open
+                        updateOpenChatWindows();
+                        renderContactList(); // Aktualisiere Chat-Liste nach eigener Nachricht
+                    }
+                }
+            } catch (e) { console.error(e); }
+        };
+    }
+
+    function toggleContactList() {
+        const list = document.getElementById('chat-contact-list-area');
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function renderContactList() {
+        const me = profiles.find(p => p.id === myId);
+        if (!me) return;
+
+        const listEl = document.getElementById('chat-contact-list-area');
+        let html = '';
+
+        // 1. Sammle alle Chat-Partner aus dem chats-Objekt
+        const chatPartners = [];
+        for (let convoId in chats) {
+            const ids = convoId.split('--').map(Number);
+            if (ids.includes(myId)) {
+                const partnerId = ids.find(id => id !== myId);
+                const partner = profiles.find(p => p.id === partnerId);
+                const messages = chats[convoId] || [];
+                if (partner && messages.length > 0) {
+                    const lastMsg = messages[messages.length - 1];
+                    chatPartners.push({
+                        id: partnerId,
+                        name: partner.name,
+                        img: partner.img,
+                        lastMsg: lastMsg.text,
+                        lastTime: new Date(lastMsg.timestamp),
+                        isSent: lastMsg.fromId === myId
+                    });
+                }
+            }
+        }
+
+        // Sortiere nach letzter Nachricht (neueste zuerst)
+        chatPartners.sort((a, b) => b.lastTime - a.lastTime);
+
+        // 2. Freunde ohne Chat
+        const chatPartnerIds = chatPartners.map(cp => cp.id);
+        const friendsWithoutChat = profiles.filter(p =>
+            me.friends.includes(p.id) && !chatPartnerIds.includes(p.id)
+        );
+
+        // Zähler aktualisieren
+        const totalContacts = chatPartners.length + friendsWithoutChat.length;
+        document.getElementById('chat-online-count').innerText = `(${chatPartners.length} Chats)`;
+
+        // 3. Render "Letzte Chats" Sektion
+        if (chatPartners.length > 0) {
+            html += `<div class="chat-section-header">💬 Letzte Chats (${chatPartners.length})</div>`;
+            html += chatPartners.map(cp => {
+                const timeStr = formatChatTime(cp.lastTime);
+                const msgPreview = cp.isSent ? `Du: ${cp.lastMsg}` : cp.lastMsg;
+                const safeName = cp.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeImg = getImg(cp.img).replace(/'/g, "\\'");
+                return `
+                    <div class="contact-item has-chat" data-userid="${cp.id}" onclick="openChatFromList(${cp.id})">
+                        <img src="${getImg(cp.img)}" class="contact-pic">
+                        <div class="contact-info">
+                            <span class="contact-name">${cp.name}</span>
+                            <span class="last-msg">${msgPreview.substring(0, 30)}${msgPreview.length > 30 ? '...' : ''}</span>
+                        </div>
+                        <span class="msg-time">${timeStr}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 4. Render "Freunde" Sektion (nur die ohne Chat)
+        if (friendsWithoutChat.length > 0) {
+            html += `<div class="chat-section-header">👥 Freunde (${friendsWithoutChat.length})</div>`;
+            html += friendsWithoutChat.map(p => `
+                <div class="contact-item" data-userid="${p.id}" onclick="openChatFromList(${p.id})">
+                    <img src="${getImg(p.img)}" class="contact-pic">
+                    <div class="contact-info">
+                        <span class="contact-name">${p.name}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Falls keine Kontakte
+        if (chatPartners.length === 0 && friendsWithoutChat.length === 0) {
+            html = '<div style="padding:20px; text-align:center; color:var(--text-sec); font-size:12px;">Keine Kontakte vorhanden</div>';
+        }
+
+        listEl.innerHTML = html;
+    }
+
+    function formatChatTime(date) {
+        const now = new Date();
+        const diff = now - date;
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (mins < 1) return 'Jetzt';
+        if (mins < 60) return `${mins}m`;
+        if (hours < 24) return `${hours}h`;
+        if (days < 7) return `${days}d`;
+        return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+    }
+
+    function openChatFromList(userId) {
+        const user = profiles.find(p => p.id === userId);
+        if (user) {
+            openChatWindow(userId, user.name, getImg(user.img));
+        }
+    }
+
+    function openChatWindow(userId, userName, userImg) {
+        if (openChats.includes(userId)) {
+            let el = document.getElementById(`chat-input-${userId}`);
+            if(el) el.focus();
+            return;
+        } 
+        if (openChats.length >= 3) { 
+            alert("Maximal 3 Chat-Fenster gleichzeitig.");
+            return;
+        }
+
+        openChats.push(userId);
+
+        const convoId = [myId, userId].sort((a, b) => a - b).join('--');
+        const history = chats[convoId] || [];
+
+        const windowEl = document.createElement('div');
+        windowEl.className = 'chat-window';
+        windowEl.id = `chat-window-${userId}`;
+        windowEl.innerHTML = `
+            <div class="chat-window-header" onclick="closeChatWindow(${userId})">
+                <img src="${userImg}" class="contact-pic">
+                <span class="contact-name">${userName}</span>
+                <span style="margin-left:auto; color:var(--text-sec); cursor:pointer;">&times;</span>
+            </div>
+            <div class="chat-window-body" id="chat-body-${userId}">
+                ${renderChatHistory(history)}
+            </div>
+            <input type="text" class="chat-window-input" id="chat-input-${userId}" placeholder="Nachricht..." onkeydown="if(event.key==='Enter') sendMessage(${userId})">
+        `;
+
+        document.getElementById('chat-windows-area').appendChild(windowEl);
+        const chatBody = document.getElementById(`chat-body-${userId}`);
+        chatBody.scrollTop = chatBody.scrollHeight; 
+        document.getElementById(`chat-input-${userId}`).focus();
+    }
+
+    function closeChatWindow(userId) {
+        const windowEl = document.getElementById(`chat-window-${userId}`);
+        if (windowEl) windowEl.remove();
+        openChats = openChats.filter(id => id !== userId);
+    }
+
+    function sendMessage(toId) {
+        const input = document.getElementById(`chat-input-${toId}`);
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (ws && ws.readyState === 1) {
+            const recipient = profiles.find(p => p.id === toId);
+            ws.send(JSON.stringify({
+                action: 'sendMessage',
+                payload: { fromId: myId, toId: toId, text: text }
+            }));
+
+            // Activity Log: Nachricht gesendet
+            logActivity('NACHRICHT_GESENDET', {
+                toId: toId,
+                toName: recipient ? recipient.name : 'Unbekannt',
+                messagePreview: text.substring(0, 100)
+            });
+
+            input.value = '';
+        } else {
+            alert("Keine Verbindung zum Server.");
+        }
+    }
+
+    function updateOpenChatWindows() {
+        openChats.forEach(userId => {
+            const convoId = [myId, userId].sort((a, b) => a - b).join('--');
+            const history = chats[convoId] || [];
+            const chatBody = document.getElementById(`chat-body-${userId}`);
+            if (chatBody) {
+                chatBody.innerHTML = renderChatHistory(history);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        });
+    }
+
+    function renderChatHistory(history) {
+        if (!history || history.length === 0) return '<div style="text-align:center; color:var(--text-sec); padding:20px;">Keine Nachrichten</div>';
+
+        let html = '';
+        let lastDate = null;
+
+        history.forEach(msg => {
+            const msgDate = msg.timestamp ? new Date(msg.timestamp) : new Date();
+            const dateStr = msgDate.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const timeStr = msgDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+            // Datum-Trenner einfügen wenn neuer Tag
+            if (dateStr !== lastDate) {
+                html += `<div class="chat-date-separator"><span>${dateStr}</span></div>`;
+                lastDate = dateStr;
+            }
+
+            const isSent = msg.fromId === myId;
+            html += `
+                <div class="msg-wrapper ${isSent ? 'sent' : 'received'}">
+                    <div class="msg-bubble ${isSent ? 'msg-sent' : 'msg-received'}">${msg.text}</div>
+                    <div class="msg-time">${timeStr}</div>
+                </div>
+            `;
+        });
+
+        return html;
+    }
+    
+    document.addEventListener('click', (e) => { 
+        if(!e.target.closest('.search-wrapper')) document.getElementById('search-results').style.display='none';
+        
+        // Dynamic handler for message buttons
+        if (e.target.classList.contains('message-btn')) {
+            let uid = parseInt(e.target.getAttribute('data-userid'));
+            let p = profiles.find(x => x.id === uid);
+            if(p) openChatWindow(p.id, p.name, getImg(p.img));
+        }
+    });
+</script>
+</body>
+</html>

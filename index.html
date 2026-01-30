@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>System auswählen</title>
+  <style>
+    :root{
+      --bg0:#0b0f1a;
+      --bg1:#0f172a;
+      --card:#111827cc;
+      --border:#273244;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#ef4444; /* rot */
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 15%, rgba(239,68,68,.15), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 24px;
+    }
+
+    .card{
+      width: min(540px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .top-text{
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: .3px;
+      margin-bottom: 6px;
+    }
+
+    h1{
+      margin: 0 0 18px 0;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    .grid{
+      display:grid;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    a.choice{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(17,24,39,.65);
+      text-decoration:none;
+      color: var(--text);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+
+    a.choice:hover{
+      transform: translateY(-2px);
+      background: rgba(17,24,39,.9);
+      border-color: rgba(239,68,68,.5);
+    }
+
+    .label{
+      text-align:left;
+    }
+
+    .label strong{
+      font-size: 16px;
+      font-weight: 650;
+      display:block;
+    }
+
+    .label span{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill{
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(239,68,68,.5);
+      color: #fecaca;
+      background: rgba(239,68,68,.12);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top-text">System auswählen</div>
+    <h1>COC UNIT FASSBERG</h1>
+
+    <section class="grid">
+      <a class="choice" href="wire.html">
+        <div class="label">
+          <strong>GHOST IN THE WIRE ONLINE</strong>
+          <span>wire.html öffnen</span>
+        </div>
+        <div class="pill">Öffnen →</div>
+      </a>
+
+      <a class="choice" href="MunsterNet.html">
+        <div class="label">
+          <strong>MunsterNet</strong>
+          <span>MunsterNet.html öffnen</span>
+        </div>
+        <div class="pill">Öffnen →</div>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
