@@ -3,35 +3,34 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
+
+// Statische Dateien aus dem Hauptverzeichnis und dem Ordner 'public' servieren
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Datenbank-Variable (wird im echten Betrieb meist aus einer JSON-Datei geladen)
+// Datenbank-Variablen
 let database = []; 
 let analysts = [];
 
-// ROUTE: Abruf der Datenbank
+// --- API ROUTEN (Müssen VOR app.listen stehen) ---
+
 app.get('/api/db', (req, res) => {
     res.json(database);
 });
 
-// ROUTE: Abruf der Analysten (behebt deinen Fehler in Zeile 2928)
 app.get('/api/analysts', (req, res) => {
     res.json(analysts);
 });
 
 // Startseite
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Prüfe, ob index.html im Hauptordner oder in 'public' liegt
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// --- SERVER START ---
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server läuft auf Port ${PORT}`);
-    // Behebt die 404 Fehler in der Konsole von wire.html
-app.get('/api/db', (req, res) => {
-    res.json([]); // Sendet ein leeres Array als Platzhalter
-});
-
-app.get('/api/analysts', (req, res) => {
-    res.json([]); // Behebt den Fehler beim Laden der Analysten
 });
