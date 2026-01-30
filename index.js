@@ -2,24 +2,28 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// 1. Erlaubt Express, Dateien direkt aus dem Hauptverzeichnis UND 'public' zu laden
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(__dirname)); 
 
-// 2. Explizite Routen festlegen (Groß-/Kleinschreibung beachten!)
+// Datenbank-Variable (wird im echten Betrieb meist aus einer JSON-Datei geladen)
+let database = []; 
+let analysts = [];
+
+// ROUTE: Abruf der Datenbank
+app.get('/api/db', (req, res) => {
+    res.json(database);
+});
+
+// ROUTE: Abruf der Analysten (behebt deinen Fehler in Zeile 2928)
+app.get('/api/analysts', (req, res) => {
+    res.json(analysts);
+});
+
+// Startseite
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/MunsterNet.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'MunsterNet.html'));
-});
-
-app.get('/wire.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'wire.html'));
-});
-
-// 3. Port-Bindung für Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server läuft auf Port ${PORT}`);
